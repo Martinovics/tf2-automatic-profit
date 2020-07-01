@@ -7,7 +7,6 @@ from config import config as cfg
 
 
 
-
 def to_keys(total_scrap: int) -> float:
     return round(total_scrap / (cfg['key_price'] * 9), 2)
 
