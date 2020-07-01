@@ -2,12 +2,11 @@ config = {
     'key_price': 55,  # actual key price in ref (float)
 
     # the bot's admins (list of strings); if you don't set all admins it will crash :/
-    'admins': ['76561198123935354', '76561198951577586'],
+    'admins': ['steamID64', 'steamID64'],
 
     # the directory's path, which has polldata.json and pricelist.json in it
-    # linux: /home/user/Files/JS/tf2-automatic-master/files/account_named_directory
-    # windows: C:\\Users\\user\\Desktop\\tf2-automatic-master\\files\\account_named_directory
-    'files_path': ['C:\\Users\\balaz\\Desktop\\Programs\\Python\\price_refresh\\files\\providipresents'],
+    'files_path': ['/home/user/on_linux/tf2-automatic-master/files/account_named_directory',
+                   'C:\\Users\\user\\on_windows\\tf2-automatic-master\\files\\account_named_directory'],
 
     'most_profit_items_count': 5,  # print x of the most profitable items
     'least_profit_items_count': 5,    # print x of the least profitable items
