@@ -1,4 +1,2 @@
-
-*.pyc
-*.xml
-*.iml
+.idea
+__pychache__
