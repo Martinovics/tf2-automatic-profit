@@ -20,4 +20,5 @@
 - If you can't get it running you can contact me on discord. *(Martinovics#5979)*
 - If the program crashes, you can send me (on discord) your polldata and pricelist json files, so I can do further testing.
 
+
 *I'm new to github and this is my first program here. I hope you will find it useful.*
