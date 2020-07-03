@@ -1,7 +1,7 @@
 import os
 import re
 import json
-import datetime
+from datetime import datetime
 from config import config as cfg
 
 
@@ -44,14 +44,14 @@ for path in cfg['files_path']:
 
 
     # get (only) accepted trades -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    first_trade_time = datetime.datetime.now()
+    first_trade_time = datetime.now()
 
     item_data = {}
     currencies = ['5021;6', '5002;6', '5001;6', '5000;6']  # key, ref, rec, scrap
 
     for trade in polldata:
 
-        trade_time = datetime.datetime.fromtimestamp(trade['finishTimestamp'] // 1000)
+        trade_time = datetime.fromtimestamp(trade['finishTimestamp'] // 1000)
         if trade_time < first_trade_time:
             first_trade_time = trade_time
 
@@ -92,7 +92,7 @@ for path in cfg['files_path']:
             continue
 
 
-        date = datetime.datetime.fromtimestamp(trade['finishTimestamp'] // 1000).strftime('%d-%m-%y_%H:%M:%S')
+        date = datetime.fromtimestamp(trade['finishTimestamp'] // 1000).strftime('%d-%m-%y_%H:%M:%S')
         sold = {'action': 'sold', 'price': their_currencies - our_currencies, 'date': date}
         bought = {'action': 'bought', 'price': our_currencies - their_currencies, 'date': date}
         if sku not in item_data:
@@ -127,8 +127,8 @@ for path in cfg['files_path']:
                 sold += 1
                 c += 1
 
-                date = datetime.datetime.strptime(trade['date'], '%d-%m-%y_%H:%M:%S')
-                date = datetime.datetime.strftime(date, '%d-%m-%Y')
+                date = datetime.strptime(trade['date'], '%d-%m-%y_%H:%M:%S')
+                date = datetime.strftime(date, '%d-%m-%Y')
 
             elif bought < len_pairs and trade['action'] == 'bought':
                 bought_total += trade['price']
@@ -165,7 +165,7 @@ for path in cfg['files_path']:
 
     # get daily profit -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     dates = list(date_profits.keys())
-    dates.sort(key=lambda date_: datetime.datetime.strptime(date_, '%d-%m-%Y'))  # sort dates
+    dates.sort(key=lambda date_: datetime.strptime(date_, '%d-%m-%Y'))  # sort dates
     date_profits = {key: date_profits[key] for key in dates}
 
     print(f"Day by day profit: (total: ~{round(sum([to_keys(date_profits[date]) for date in date_profits]), 2)} keys)")
@@ -211,7 +211,7 @@ for path in cfg['files_path']:
     # estimated profits -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     profit = sum([item_data[sku]['profit'] for sku in item_data])
 
-    days = (datetime.datetime.now() - first_trade_time).days
+    days = (datetime.now() - first_trade_time).days
     s_time = f" in {days} (full)days, that's {to_keys(profit/days)} keys / 24h"
 
     print(f"estimated profit: {to_keys(profit)} keys{s_time}")
