@@ -81,15 +81,21 @@ for path in cfg['files_path']:
 
         action = 'sold' if [sku for sku in trade['dict']['our'] if sku not in currencies] else 'bought'
 
-        if action == 'sold':
-            sku = [sku for sku in trade['dict']['our'] if sku not in currencies]
-        else:
-            sku = [sku for sku in trade['dict']['their'] if sku not in currencies]
 
-        if sku:
-            sku = sku[0]  # multiple items
+        skus = []
+        sold_skus = [sku for sku in trade['dict']['our'] if sku not in currencies]  # item skus
+        bought_skus = [sku for sku in trade['dict']['their'] if sku not in currencies]   # item skus
+
+        if len(sold_skus) != len(bought_skus):
+            skus = sold_skus if action == 'sold' else bought_skus
+
+            if skus:
+                sku = skus[0]  # multiple items
+            else:
+                continue
         else:
             continue
+
 
 
         date = datetime.fromtimestamp(trade['finishTimestamp'] // 1000).strftime('%d-%m-%y_%H:%M:%S')
