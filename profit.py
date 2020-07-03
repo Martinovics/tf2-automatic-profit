@@ -115,8 +115,20 @@ for path in cfg['files_path']:
     for sku, data in item_data.items():
         profit = 0  # profit on this item
 
-        sold = len([trade for trade in data['trades'] if trade['action'] == 'sold'])
-        bought = len([trade for trade in data['trades'] if trade['action'] == 'bought'])
+        # if we already had the item(before bot logging), we don't know it's bought price  <<<<<<<<<<<<<<< needs some more thinking
+        trades = data['trades']
+        if trades[0]['action'] == 'sold':
+            from_ = 0
+            for trade in trades:
+                if trade['action'] == 'sold':
+                    from_ += 1
+                else:
+                    break
+
+            trades = trades[from_:]
+
+        sold = len([trade for trade in trades if trade['action'] == 'sold'])
+        bought = len([trade for trade in trades if trade['action'] == 'bought'])
 
         len_pairs = min([sold, bought])  # the number of bought-sold pairs
 
@@ -124,7 +136,7 @@ for path in cfg['files_path']:
         date = '01-01-1999'  # no date
         sold = sold_price = sold_total = 0
         bought = bought_price = bought_total = 0
-        for trade in data['trades']:
+        for trade in trades:
             c_ = c
 
             if sold < len_pairs and trade['action'] == 'sold':
