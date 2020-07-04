@@ -113,52 +113,46 @@ for path in cfg['files_path']:
 
     date_profits = {}
     for sku, data in item_data.items():
-        profit = 0  # profit on this item
 
-        # if we already had the item(before bot logging), we don't know it's bought price  <<<<<<<<<<<<<<< needs some more thinking
         trades = data['trades']
-        if trades[0]['action'] == 'sold':
-            from_ = 0
-            for trade in trades:
-                if trade['action'] == 'sold':
-                    from_ += 1
-                else:
+
+        sold_idexes = []
+        bought_idexes = []
+        for i, trade in enumerate(trades):
+            if trade['action'] == 'sold':
+                sold_idexes.append(i)
+            else:
+                bought_idexes.append(i)
+
+        pairs = []  # (trades)index pairs
+        for b in bought_idexes:
+            for s in sold_idexes:
+                if b < s:
+                    pairs.append((b, s))  # n: bought index; n+|x| sold index
+                    sold_idexes.remove(s)
                     break
 
-            trades = trades[from_:]
+        trades_ = []
+        for b, s in pairs:
+            trades_.append((trades[b], trades[s]))
+        trades = trades_
 
-        sold = len([trade for trade in trades if trade['action'] == 'sold'])
-        bought = len([trade for trade in trades if trade['action'] == 'bought'])
 
-        len_pairs = min([sold, bought])  # the number of bought-sold pairs
+        sold_price = sold_total = 0
+        bought_price = bought_total = 0
+        for b_trade, s_trade in trades:
 
-        c = c_ = 0
-        date = '01-01-1999'  # no date
-        sold = sold_price = sold_total = 0
-        bought = bought_price = bought_total = 0
-        for trade in trades:
-            c_ = c
+            bought_total += b_trade['price']
+            bought_price = b_trade['price']
 
-            if sold < len_pairs and trade['action'] == 'sold':
-                sold_total += trade['price']
-                sold_price = trade['price']
-                sold += 1
-                c += 1
+            sold_total += s_trade['price']
+            sold_price = s_trade['price']
 
-                date = datetime.strptime(trade['date'], '%d-%m-%y_%H:%M:%S')
-                date = datetime.strftime(date, '%d-%m-%Y')
-
-            elif bought < len_pairs and trade['action'] == 'bought':
-                bought_total += trade['price']
-                bought_price = trade['price']
-                bought += 1
-                c += 1
-
-            if bought == sold and (0 < bought and 0 < sold) and c_ < c:
-                if date in date_profits:
-                    date_profits[date] += (sold_price - bought_price)
-                else:
-                    date_profits[date] = (sold_price - bought_price)
+            date = datetime.strftime(datetime.strptime(s_trade['date'], '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
+            if date in date_profits:
+                date_profits[date] += (sold_price - bought_price)
+            else:
+                date_profits[date] = (sold_price - bought_price)
 
         item_data[sku]['profit'] = sold_total - bought_total
 
