@@ -237,7 +237,7 @@ for path in cfg['files_path']:
             if trade['action'] == 'bought':
 
                 for listing in pricelist:
-                    if listing['sku'] == sku:
+                    if listing['sku'] == sku and listing['enabled']:
                         profit += ((listing['sell']['keys'] * cfg['key_price'] * 9) + (listing['sell']['metal'] * 9)) - trade['price']
                         break
 
