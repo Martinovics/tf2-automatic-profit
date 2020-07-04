@@ -231,14 +231,26 @@ for path in cfg['files_path']:
 
     profit = 0
     for sku, data in item_data.items():
-        if 0 < len(data['trades']):
 
-            trade = data['trades'][-1]
+        c = 0
+        trades = data['trades']
+        for trade in reversed(trades):
             if trade['action'] == 'bought':
+                c += 1
+            else:
+                break
+        trades = trades[len(trades) - c:]  # last 'bought' trades only
 
-                for listing in pricelist:
-                    if listing['sku'] == sku and listing['enabled']:
-                        profit += ((listing['sell']['keys'] * cfg['key_price'] * 9) + (listing['sell']['metal'] * 9)) - trade['price']
-                        break
+
+        if trades:
+            for listing in pricelist:
+                if listing['sku'] == sku and listing['enabled']:
+                    key = listing['sell']['keys'] * cfg['key_price'] * 9
+                    ref = listing['sell']['metal'] * 9
+
+                    for trade in trades:
+                        profit += ((key + ref) - trade['price'])
+
+                    break
 
     print(f"potential profit: {to_keys(profit)} keys")
