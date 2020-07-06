@@ -229,7 +229,7 @@ for path in cfg['files_path']:
     print(f"estimated profit: {to_keys(profit)} keys{s_time}")
 
 
-    profit = 0
+    profit = 0  # this (potential) method is actually shit; I'll work on it
     for sku, data in item_data.items():
 
         c = 0
