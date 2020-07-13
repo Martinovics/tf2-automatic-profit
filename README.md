@@ -19,7 +19,7 @@
 *\*trades: Accepted trades only, where the trade partner wasn't an admin and the items were traded for pure.*
 
 ### Notes:
-- Key values may vary(±0.01), because of the 2 digit roundings.
+- Key values may vary a bit, because of the 2 digit roundings.
 - If you can't get it running you can contact me on discord. *(Martinovics#5979)*
 - If the program crashes, you can send me your polldata and pricelist json files (discord), so I can do further testing.
 - Also **let me know how accurate is this**.
