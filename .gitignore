@@ -1,4 +1,6 @@
 .idea
 __pycache__
+*.pyc
 tests
 config.py
+history.json
