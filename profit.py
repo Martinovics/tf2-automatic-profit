@@ -15,7 +15,7 @@ def to_keys(total_scrap: int) -> float:
 
 for path in cfg['files_path']:
     account_name = path.split('/')[-1] if '/' in path else path.split('\\')[-1]
-    print(f"\nProfits for {account_name} --{'--=-=-==-==-===-==-==-=-=--' * 3}--\n")
+    print(f"\n\nProfits for {account_name} --{'--=-=-==-==-===-==-==-=-=--' * 3}--\n")
 
 
     # load pricelist and polldata json files -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -221,7 +221,7 @@ for path in cfg['files_path']:
 
 
     # estimated profits -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    profit = sum([item_data[sku]['profit'] for sku in item_data])
+    profit = total_profit = sum([item_data[sku]['profit'] for sku in item_data])  # total profit; total_profit: save profit value for later use
 
     days = (datetime.now() - first_trade_time).days
     s_time = f" in {days} (full)days, that's {to_keys(profit/days)} keys / 24h"
@@ -229,7 +229,7 @@ for path in cfg['files_path']:
     print(f"estimated profit: {to_keys(profit)} keys{s_time}")
 
 
-    profit = 0  # this (potential) method is actually shit; I'll work on it
+    profit = 0  # this isn't accurate, but it can give a rough estimate
     for sku, data in item_data.items():
 
         c = 0
@@ -254,3 +254,30 @@ for path in cfg['files_path']:
                     break
 
     print(f"potential profit: {to_keys(profit)} keys")
+
+
+
+    # profit since last checked -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    if 'history.json' not in os.listdir('./'):
+        with open('./history.json', 'w', encoding='utf-8') as f:
+            f.write(json.dumps({}, indent=4, ensure_ascii=False))
+
+    with open('./history.json', 'r', encoding='utf-8') as f:
+        history = f.read()
+    history = json.loads(history)
+
+
+    if account_name not in history:
+        history[account_name] = {}
+    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = to_keys(total_profit)
+
+
+    if 2 <= len(history[account_name]):
+        h = history[account_name]
+        dates = list(history[account_name].keys())
+
+        print(f"profit since last checked ({dates[-2]}): {round(h[dates[-1]] - h[dates[-2]], 2)} keys")
+
+
+    with open('./history.json', 'w', encoding='utf-8') as f:
+        f.write(json.dumps(history, indent=4, ensure_ascii=False))
