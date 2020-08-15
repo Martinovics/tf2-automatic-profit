@@ -2,7 +2,7 @@
 *The code was written in python3.8.2, but I guess it's working on python3.6 and above.*
 
 ### What it does?:
-- **Calculates tf2-automatic bot profit** from it's generated files.
+- **Calculates tf2-automatic bot profit** from its generated files.
 
 ### To get it running:
 - **Set up** your **config.py** file. *(There are some information of the settings in the file itself.)*
@@ -25,4 +25,4 @@
 - Also **let me know how accurate is this**.
 
 
-*I'm new to github and this is my first program here. I hope you will find it useful.*
+*I hope you will find it useful.*
