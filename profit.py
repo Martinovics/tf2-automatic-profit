@@ -1,45 +1,27 @@
 import os
 import re
 import json
+import tools.utils as utils
 from datetime import datetime
-from config import config as cfg
+from tools.config import Config as cfg
+from tools.config import Const as const
 
 
 
 
-def to_keys(total_scrap: int) -> float:
-    return round(total_scrap / (cfg['key_price'] * 9), 2)
 
-
-
-
-for path in cfg['files_path']:
-    account_name = path.split('/')[-1] if '/' in path else path.split('\\')[-1]
+for path in cfg.PATHS:
+    account_name = utils.name_from_path(path)
     print(f"\n\nProfits for {account_name} --{'--=-=-==-==-===-==-==-=-=--' * 3}--\n")
 
 
     # load pricelist and polldata json files -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    with open(os.path.join(path, 'pricelist.json'), 'r', encoding='utf-8') as f:
-        pricelist = f.read()
-    pricelist = json.loads(pricelist)
+    pricelist = utils.read_file(os.path.join(path, 'pricelist.json'))
+    polldata = utils.read_file(os.path.join(path, 'polldata.json'))
 
-
-    with open(os.path.join(path, 'polldata.json'), 'r', encoding='utf-8') as f:
-        polldata = f.read()
-    polldata = json.loads(polldata)
-
-    if 'offerData' in polldata:
-        polldata = polldata['offerData']
-    else:
+    if not polldata:
         print(f"{account_name} haven't made any trades yet.")
         continue
-
-    polldata_ = []
-    for _, trade in polldata.items():
-        if 'isAccepted' in trade:
-            if trade['isAccepted'] and trade['partner'] not in cfg['admins']:
-                polldata_.append(trade)
-    polldata = polldata_
 
 
 
@@ -56,35 +38,26 @@ for path in cfg['files_path']:
             first_trade_time = trade_time
 
 
-        rate = trade['value']['rate'] * 9  # key price in scrap (at that time)
 
-        our_currencies = 0
-        if '5021;6' in trade['dict']['our']:  # key
-            our_currencies += trade['dict']['our']['5021;6'] * rate
-        if '5002;6' in trade['dict']['our']:  # ref
-            our_currencies += trade['dict']['our']['5002;6'] * 9
-        if '5001;6' in trade['dict']['our']:  # rec
-            our_currencies += trade['dict']['our']['5001;6'] * 3
-        if '5000;6' in trade['dict']['our']:  # scrap
-            our_currencies += trade['dict']['our']['5000;6'] * 1
-
-        their_currencies = 0
-        if '5021;6' in trade['dict']['their']:  # key
-            their_currencies += trade['dict']['their']['5021;6'] * rate
-        if '5002;6' in trade['dict']['their']:  # ref
-            their_currencies += trade['dict']['their']['5002;6'] * 9
-        if '5001;6' in trade['dict']['their']:  # rec
-            their_currencies += trade['dict']['their']['5001;6'] * 3
-        if '5000;6' in trade['dict']['their']:  # scrap
-            their_currencies += trade['dict']['their']['5000;6'] * 1
+        # get pures on both sides (in scrap)
+        our_currencies = their_currencies = 0
+        for curr, scrap in const.CURRENCIES.items():
+            if curr == list(const.CURRENCIES.keys())[0]:
+                scrap = trade['value']['rate'] * 9
+            
+            if curr in trade['dict']['our']:  # key
+                our_currencies += trade['dict']['our'][curr] * scrap
+            if curr in trade['dict']['their']:  # key
+                their_currencies += trade['dict']['their'][curr] * scrap
+        
 
 
-        action = 'sold' if [sku for sku in trade['dict']['our'] if sku not in currencies] else 'bought'
+        action = 'sold' if [sku for sku in trade['dict']['our'] if sku not in const.CURRENCIES] else 'bought'
 
 
         skus = []
-        sold_skus = [sku for sku in trade['dict']['our'] if sku not in currencies]  # item skus
-        bought_skus = [sku for sku in trade['dict']['their'] if sku not in currencies]   # item skus
+        sold_skus = [sku for sku in trade['dict']['our'] if sku not in const.CURRENCIES]  # item skus
+        bought_skus = [sku for sku in trade['dict']['their'] if sku not in const.CURRENCIES]   # item skus
 
         if len(sold_skus) != len(bought_skus):
             skus = sold_skus if action == 'sold' else bought_skus
@@ -160,11 +133,11 @@ for path in cfg['files_path']:
 
     # print item data -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     max_len_sku = max([len(sku) for sku in item_data])
-    max_len_profit = max([len(f"{to_keys(item_data[sku]['profit'])} keys") for sku in item_data])
-    if cfg['print_item_data']:
+    max_len_profit = max([len(f"{utils.to_keys(item_data[sku]['profit'])} keys") for sku in item_data])
+    if cfg.PRINT_ALL_TRADES:
         for sku, data in item_data.items():
-            profit = to_keys(data['profit'])
-            trades = [f"{trade['action'][0]}{to_keys(trade['price'])}k{re.sub(r'[-:]', '', trade['date'])}"
+            profit = utils.to_keys(data['profit'])
+            trades = [f"{trade['action'][0]}{utils.to_keys(trade['price'])}k{re.sub(r'[-:]', '', trade['date'])}"
                       for trade in data['trades']]
 
             tab1 = (max_len_sku + 2 - len(sku)) * ' '
@@ -180,11 +153,11 @@ for path in cfg['files_path']:
     dates.sort(key=lambda date_: datetime.strptime(date_, '%d-%m-%Y'))  # sort dates
     date_profits = {key: date_profits[key] for key in dates}
 
-    print(f"Day by day profit: (total: ~{round(sum([to_keys(date_profits[date]) for date in date_profits]), 2)} keys)")
+    print(f"Day by day profit: (total: ~{round(sum([utils.to_keys(date_profits[date]) for date in date_profits]), 2)} keys)")
 
     c = 1
     for date, profit in date_profits.items():
-        print(f'{c}.' + '\t' + f"{date}  {to_keys(profit)} keys")
+        print(f'{c}.' + '\t' + f"{date}  {utils.to_keys(profit)} keys")
         c += 1
     print()
 
@@ -200,10 +173,10 @@ for path in cfg['files_path']:
     s = ''
     for item in item_profits:
         sku = item['sku']
-        item_profit = to_keys(item['profit'])
+        item_profit = utils.to_keys(item['profit'])
 
         s += f"{sku}{(max_len_sku + 2 - len(sku)) * ' '}{item_profit} keys\n"
-        if s.count('\n') == cfg['most_profit_items_count']:
+        if s.count('\n') == cfg.MOST_PRIFIT_ITEMS_COUNT:
             break
     print(f"The most profitable items:\n{s}")
 
@@ -211,10 +184,10 @@ for path in cfg['files_path']:
     s = ''
     for item in reversed(item_profits):
         sku = item['sku']
-        item_profit = to_keys(item['profit'])
+        item_profit = utils.to_keys(item['profit'])
 
         s += f"{sku}{(max_len_sku + 2 - len(sku)) * ' '}{item_profit} keys\n"
-        if s.count('\n') == cfg['least_profit_items_count']:
+        if s.count('\n') == cfg.LEAST_PRIFIT_ITEMS_COUNT:
             break
     print(f"The least profitable items:\n{s}")
 
@@ -224,9 +197,9 @@ for path in cfg['files_path']:
     profit = total_profit = sum([item_data[sku]['profit'] for sku in item_data])  # total profit; total_profit: save profit value for later use
 
     days = (datetime.now() - first_trade_time).days
-    s_time = f" in {days} (full)days, that's {to_keys(profit/days)} keys / 24h"
+    s_time = f" in {days} (full)days, that's {utils.to_keys(profit/days)} keys / 24h"
 
-    print(f"estimated profit: {to_keys(profit)} keys{s_time}")
+    print(f"estimated profit: {utils.to_keys(profit)} keys{s_time}")
 
 
     profit = 0  # this isn't accurate, but it can give a rough estimate
@@ -245,7 +218,7 @@ for path in cfg['files_path']:
         if trades:
             for listing in pricelist:
                 if listing['sku'] == sku and listing['enabled']:
-                    key = listing['sell']['keys'] * cfg['key_price'] * 9
+                    key = listing['sell']['keys'] * cfg.KEY_PRICE * 9
                     ref = listing['sell']['metal'] * 9
 
                     for trade in trades:
@@ -253,7 +226,7 @@ for path in cfg['files_path']:
 
                     break
 
-    print(f"potential profit: {to_keys(profit)} keys")
+    print(f"potential profit: {utils.to_keys(profit)} keys")
 
 
 
@@ -269,7 +242,7 @@ for path in cfg['files_path']:
 
     if account_name not in history:
         history[account_name] = {}
-    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = to_keys(total_profit)
+    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = utils.to_keys(total_profit)
 
 
     if 2 <= len(history[account_name]):
