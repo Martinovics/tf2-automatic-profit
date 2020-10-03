@@ -5,7 +5,7 @@
 - **Calculates tf2-automatic bot profit** from its generated files.
 
 ### To get it running:
-- **Set up** your **config.py** file. *(There are some information of the settings in the file itself.)*
+- **Set up** your **config_temp.py** file, **then rename** it **to config.py**. *(There are some information of the settings in the file itself.)*
 - **Run** the **profit.py** file with ***python profit.py*** or with ***python***(whatever version you have, like 3.8) ***profit.py***
 
 ### You will see:
