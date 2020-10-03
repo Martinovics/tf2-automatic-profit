@@ -1,7 +1,9 @@
-.idea
-__pycache__
-*.pyc
 venv
+.vscode
+
 *test*
-config.py
-history.json
+*.pyc
+__pycache__
+
+files
+tools/config.py
