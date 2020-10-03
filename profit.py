@@ -12,12 +12,12 @@ from tools.config import Const as const
 
 for path in cfg.PATHS:
     account_name = utils.name_from_path(path)
-    print(f"\n\nProfits for {account_name} --{'--=-=-==-==-===-==-==-=-=--' * 3}--\n")
+    print(f"\n\nProfits for {account_name} --{'--=-=-==-====-==-=-=--' * 3}--\n")
 
 
-    # load pricelist and polldata json files -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     pricelist = utils.read_file(os.path.join(path, 'pricelist.json'))
-    polldata = utils.read_file(os.path.join(path, 'polldata.json'))
+    polldata = utils.read_file(os.path.join(path, 'polldata.json'))  # accepted, non-admin trades only
 
     if not polldata:
         print(f"{account_name} haven't made any trades yet.")
@@ -25,11 +25,8 @@ for path in cfg.PATHS:
 
 
 
-    # get (only) accepted trades -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    first_trade_time = datetime.now()
-
     item_data = {}
-    currencies = ['5021;6', '5002;6', '5001;6', '5000;6']  # key, ref, rec, scrap
+    first_trade_time = datetime.now()
 
     for trade in polldata:
 
@@ -38,26 +35,24 @@ for path in cfg.PATHS:
             first_trade_time = trade_time
 
 
-
         # get pures on both sides (in scrap)
-        our_currencies = their_currencies = 0
+        our_curr = their_curr = 0
         for curr, scrap in const.CURRENCIES.items():
             if curr == list(const.CURRENCIES.keys())[0]:
                 scrap = trade['value']['rate'] * 9
             
-            if curr in trade['dict']['our']:  # key
-                our_currencies += trade['dict']['our'][curr] * scrap
-            if curr in trade['dict']['their']:  # key
-                their_currencies += trade['dict']['their'][curr] * scrap
-        
+            if curr in trade['dict']['our']:
+                our_curr += trade['dict']['our'][curr] * scrap
+            if curr in trade['dict']['their']:
+                their_curr += trade['dict']['their'][curr] * scrap
 
 
-        action = 'sold' if [sku for sku in trade['dict']['our'] if sku not in const.CURRENCIES] else 'bought'
-
-
+        # should think more about this ˇ
         skus = []
-        sold_skus = [sku for sku in trade['dict']['our'] if sku not in const.CURRENCIES]  # item skus
-        bought_skus = [sku for sku in trade['dict']['their'] if sku not in const.CURRENCIES]   # item skus
+        sold_skus = [sku for sku in trade['dict']['our'] if sku not in const.CURRENCIES]
+        bought_skus = [sku for sku in trade['dict']['their'] if sku not in const.CURRENCIES]
+
+        action = 'sold' if sold_skus else 'bought'
 
         if len(sold_skus) != len(bought_skus):
             skus = sold_skus if action == 'sold' else bought_skus
@@ -68,16 +63,22 @@ for path in cfg.PATHS:
                 continue
         else:
             continue
+        # should think more about this ^
 
 
+        trade_time = datetime.fromtimestamp(trade['finishTimestamp'] // 1000)
+        if trade_time < first_trade_time:
+            first_trade_time = trade_time
+        trade_time = trade_time.strftime('%d-%m-%y_%H:%M:%S')
 
-        date = datetime.fromtimestamp(trade['finishTimestamp'] // 1000).strftime('%d-%m-%y_%H:%M:%S')
-        sold = {'action': 'sold', 'price': their_currencies - our_currencies, 'date': date}
-        bought = {'action': 'bought', 'price': our_currencies - their_currencies, 'date': date}
         if sku not in item_data:
             item_data[sku] = {'profit': 0, 'trades': []}
 
-        item_data[sku]['trades'].append(sold) if action == 'sold' else item_data[sku]['trades'].append(bought)
+        if action == 'sold':
+            item_data[sku]['trades'].append({'action': 'sold', 'price': their_curr - our_curr, 'time': trade_time})
+        else:
+            item_data[sku]['trades'].append({'action': 'bought', 'price': our_curr - their_curr, 'time': trade_time})
+
 
 
     item_data = dict(sorted(item_data.items()))
@@ -121,7 +122,7 @@ for path in cfg.PATHS:
             sold_total += s_trade['price']
             sold_price = s_trade['price']
 
-            date = datetime.strftime(datetime.strptime(s_trade['date'], '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
+            date = datetime.strftime(datetime.strptime(s_trade['time'], '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
             if date in date_profits:
                 date_profits[date] += (sold_price - bought_price)
             else:
@@ -137,7 +138,7 @@ for path in cfg.PATHS:
     if cfg.PRINT_ALL_TRADES:
         for sku, data in item_data.items():
             profit = utils.to_keys(data['profit'])
-            trades = [f"{trade['action'][0]}{utils.to_keys(trade['price'])}k{re.sub(r'[-:]', '', trade['date'])}"
+            trades = [f"{trade['action'][0]}{utils.to_keys(trade['price'])}k{re.sub(r'[-:]', '', trade['time'])}"
                       for trade in data['trades']]
 
             tab1 = (max_len_sku + 2 - len(sku)) * ' '
