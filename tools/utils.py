@@ -5,7 +5,7 @@ from tools.config import Config as cfg
 
 
 
-def to_keys(scrap: int) -> float:  # not the best, but good enough
+def to_keys(scrap: int) -> float:  # not the best, but close enough
     return round(scrap / (cfg.KEY_PRICE * 9), 2)
 
 
@@ -41,9 +41,6 @@ def read_file(path_to_file: str) -> list:
                 if trade['isAccepted'] and trade['partner'] not in cfg.ADMINS:
                     polldata_.append(trade)
         return polldata_
-
-
-
 
     else:
         return []
