@@ -69,7 +69,7 @@ for path in cfg.PATHS:
         trade_time = datetime.fromtimestamp(trade['finishTimestamp'] // 1000)
         if trade_time < first_trade_time:
             first_trade_time = trade_time
-        trade_time = trade_time.strftime('%d-%m-%y_%H:%M:%S')
+        trade_time = trade_time#.strftime('%d-%m-%y_%H:%M:%S')
 
         if sku not in item_data:
             item_data[sku] = {'profit': 0, 'trades': []}
@@ -90,45 +90,35 @@ for path in cfg.PATHS:
 
         trades = data['trades']
 
-        sold_idexes = []
-        bought_idexes = []
-        for i, trade in enumerate(trades):
-            if trade['action'] == 'sold':
-                sold_idexes.append(i)
-            else:
-                bought_idexes.append(i)
-
-        pairs = []  # (trades)index pairs
-        for b in bought_idexes:
-            for s in sold_idexes:
-                if b < s:
-                    pairs.append((b, s))  # n: bought index; n+|x| sold index
-                    sold_idexes.remove(s)
-                    break
-
         trades_ = []
-        for b, s in pairs:
-            trades_.append((trades[b], trades[s]))
+        s_trades = [trade for trade in trades if trade['action'] == 'sold']
+        b_trades = [trade for trade in trades if trade['action'] == 'bought']
+
+        for b in b_trades:
+            for s in s_trades:
+                
+                if b['time'] <= s['time']:
+                    trades_.append((b, s))
+                    s_trades.remove(s)
+                    break
+        
         trades = trades_
 
 
-        sold_price = sold_total = 0
-        bought_price = bought_total = 0
-        for b_trade, s_trade in trades:
+        s_total = b_total = 0
+        for b, s in trades:
 
-            bought_total += b_trade['price']
-            bought_price = b_trade['price']
+            s_total += s['price']
+            b_total += b['price']
 
-            sold_total += s_trade['price']
-            sold_price = s_trade['price']
-
-            date = datetime.strftime(datetime.strptime(s_trade['time'], '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
+            # date = datetime.strftime(datetime.strptime(s['time'].strftime('%d-%m-%y_%H:%M:%S'), '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
+            date = datetime.strftime(s['time'], '%d-%m-%Y')
             if date in date_profits:
-                date_profits[date] += (sold_price - bought_price)
+                date_profits[date] += (s['price'] - b['price'])
             else:
-                date_profits[date] = (sold_price - bought_price)
+                date_profits[date] = (s['price'] - b['price'])
 
-        item_data[sku]['profit'] = sold_total - bought_total
+        item_data[sku]['profit'] = s_total - b_total
 
 
 
