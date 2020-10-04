@@ -1,6 +1,8 @@
 venv
 .vscode
 
+*history*
+
 *test*
 *.pyc
 __pycache__
