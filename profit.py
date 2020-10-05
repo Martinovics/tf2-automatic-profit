@@ -69,7 +69,6 @@ for path in cfg.PATHS:
         trade_time = datetime.fromtimestamp(trade['finishTimestamp'] // 1000)
         if trade_time < first_trade_time:
             first_trade_time = trade_time
-        trade_time = trade_time#.strftime('%d-%m-%y_%H:%M:%S')
 
         if sku not in item_data:
             item_data[sku] = {'profit': 0, 'trades': []}
@@ -111,7 +110,6 @@ for path in cfg.PATHS:
             s_total += s['price']
             b_total += b['price']
 
-            # date = datetime.strftime(datetime.strptime(s['time'].strftime('%d-%m-%y_%H:%M:%S'), '%d-%m-%y_%H:%M:%S'), '%d-%m-%Y')
             date = datetime.strftime(s['time'], '%d-%m-%Y')
             if date in date_profits:
                 date_profits[date] += (s['price'] - b['price'])
@@ -124,17 +122,18 @@ for path in cfg.PATHS:
 
     # print item data -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     max_len_sku = max([len(sku) for sku in item_data])
-    max_len_profit = max([len(f"{utils.to_keys(item_data[sku]['profit'])} keys") for sku in item_data])
+    max_len_profit = max([len(f"{utils.to_keys(item_data[sku]['profit'])}") for sku in item_data]) + len(' keys')
+    
     if cfg.PRINT_ALL_TRADES:
         for sku, data in item_data.items():
+
             profit = utils.to_keys(data['profit'])
-            trades = [f"{trade['action'][0]}{utils.to_keys(trade['price'])}k{re.sub(r'[-:]', '', trade['time'])}"
-                      for trade in data['trades']]
+            trades = [f"{t['action'][0]}{utils.to_keys(t['price'])}k{t['time'].strftime('%d%m%y_%H%M%S')}" for t in data['trades']]
 
-            tab1 = (max_len_sku + 2 - len(sku)) * ' '
-            tab2 = (max_len_profit + 3 - len(f"{profit} keys")) * ' '
+            space1 = utils.space(max_len_sku, 2, sku)
+            space2 = utils.space(max_len_profit, 3, f'{profit} keys')
 
-            print(f"{sku}{tab1}profit: {profit} keys{tab2}trades: {'  '.join(trades)}")
+            print(f"{sku}{space1}profit: {profit} keys{space2}trades: {'  '.join(trades)}")
         print()
 
 
