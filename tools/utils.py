@@ -11,6 +11,12 @@ def to_keys(scrap: int) -> float:  # not the best, but close enough
 
 
 
+def space(max_length: int, extra_space: int, current_string: str):
+    return (max_length + extra_space - len(current_string)) * ' '
+
+
+
+
 def name_from_path(path: str) -> str:
     path = path.split('/') if '/' in path else path.split('\\')
     return path[-1]
