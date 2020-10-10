@@ -1,11 +1,10 @@
 venv
 .vscode
 
-*history*
-
 *test*
 *.pyc
 __pycache__
 
-files
 tools/config.py
+logs/history.json
+logs/*_log.txt
