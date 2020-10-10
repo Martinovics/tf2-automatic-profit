@@ -12,7 +12,7 @@ from tools.config import Const as const
 
 for path in cfg.PATHS:
     account_name = utils.name_from_path(path)
-    print(f"\n\nProfits for {account_name} --{'--=-=-==-====-==-=-=--' * 3}--\n")
+    print(f"Stats for {account_name} ========================================\n")
 
 
 
@@ -101,8 +101,10 @@ for path in cfg.PATHS:
                     s_trades.remove(s)
                     break
         
-        trades = trades_
-
+        paired = [*[b for b, s in trades_], *[s for b, s in trades_]]
+        item_data[sku]['pairless'] = [trade for trade in trades if trade not in paired]  # pairless trades
+        
+        trades = trades_  # paired trades
 
         s_total = b_total = 0
         for b, s in trades:
@@ -140,70 +142,62 @@ for path in cfg.PATHS:
 
     # get daily profit -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     dates = list(date_profits.keys())
-    dates.sort(key=lambda date_: datetime.strptime(date_, '%d-%m-%Y'))  # sort dates
+    dates.sort(key=lambda date_: datetime.strptime(date_, '%d-%m-%Y'))
     date_profits = {key: date_profits[key] for key in dates}
 
     print(f"Day by day profit: (total: ~{round(sum([utils.to_keys(date_profits[date]) for date in date_profits]), 2)} keys)")
 
     c = 1
     for date, profit in date_profits.items():
-        print(f'{c}.' + '\t' + f"{date}  {utils.to_keys(profit)} keys")
+        print(f'{c}.\t{date}\t{utils.to_keys(profit)} keys')
         c += 1
     print()
 
 
 
     # get most and least profitable items -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    item_profits = []
-    for sku, data in item_data.items():
-        item_profits.append({'sku': sku, 'profit': data['profit']})
+    item_profits = [{'sku': sku, 'profit': data['profit']} for sku, data in item_data.items()]
     item_profits = sorted(item_profits, key=lambda k: k['profit'], reverse=True)
 
 
     s = ''
     for item in item_profits:
-        sku = item['sku']
-        item_profit = utils.to_keys(item['profit'])
-
-        s += f"{sku}{(max_len_sku + 2 - len(sku)) * ' '}{item_profit} keys\n"
+        s += f"{item['sku']}{utils.space(max_len_sku, 2, item['sku'])}{utils.to_keys(item['profit']) } keys\n"
+        
         if s.count('\n') == cfg.MOST_PRIFIT_ITEMS_COUNT:
             break
+    
     print(f"The most profitable items:\n{s}")
 
 
     s = ''
     for item in reversed(item_profits):
-        sku = item['sku']
-        item_profit = utils.to_keys(item['profit'])
-
-        s += f"{sku}{(max_len_sku + 2 - len(sku)) * ' '}{item_profit} keys\n"
+        s += f"{item['sku']}{utils.space(max_len_sku, 2, item['sku'])}{utils.to_keys(item['profit'])} keys\n"
+        
         if s.count('\n') == cfg.LEAST_PRIFIT_ITEMS_COUNT:
             break
+    
     print(f"The least profitable items:\n{s}")
 
 
 
+    # most and least traded items
+
+
+
     # estimated profits -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    profit = total_profit = sum([item_data[sku]['profit'] for sku in item_data])  # total profit; total_profit: save profit value for later use
-
     days = (datetime.now() - first_trade_time).days
-    s_time = f" in {days} (full)days, that's {utils.to_keys(profit/days)} keys / 24h"
+    profit = sum([item_data[sku]['profit'] for sku in item_data])
 
-    print(f"estimated profit: {utils.to_keys(profit)} keys{s_time}")
+    print('Profits: ')
+    print(f"estimated: {utils.to_keys(profit)} keys in {days} (full)days, that's {utils.to_keys(profit/days)} keys / 24h")
 
 
-    profit = 0  # this isn't accurate, but it can give a rough estimate
+    profit = 0
     for sku, data in item_data.items():
 
-        c = 0
-        trades = data['trades']
-        for trade in reversed(trades):
-            if trade['action'] == 'bought':
-                c += 1
-            else:
-                break
-        trades = trades[len(trades) - c:]  # last 'bought' trades only
-
+        # we need pairless bought trades
+        trades = [trade for trade in data['pairless'] if trade['action'] == 'bought']
 
         if trades:
             for listing in pricelist:
@@ -216,31 +210,37 @@ for path in cfg.PATHS:
 
                     break
 
-    print(f"potential profit: {utils.to_keys(profit)} keys")
+    print(f"potential: {utils.to_keys(profit)} keys")
 
 
 
     # profit since last checked -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    if 'history.json' not in os.listdir('./'):
-        with open('./history.json', 'w', encoding='utf-8') as f:
+    profit = sum([item_data[sku]['profit'] for sku in item_data])
+    
+    if 'history.json' not in os.listdir('./logs'):
+        with open('./logs/history.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps({}, indent=4, ensure_ascii=False))
 
-    with open('./history.json', 'r', encoding='utf-8') as f:
+    with open('./logs/history.json', 'r', encoding='utf-8') as f:
         history = f.read()
     history = json.loads(history)
 
 
     if account_name not in history:
         history[account_name] = {}
-    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = utils.to_keys(total_profit)
+    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = utils.to_keys(profit)
 
 
     if 2 <= len(history[account_name]):
         h = history[account_name]
         dates = list(history[account_name].keys())
 
-        print(f"profit since last checked ({dates[-2]}): {round(h[dates[-1]] - h[dates[-2]], 2)} keys")
+        print(f"since last checked ({dates[-2]}): {round(h[dates[-1]] - h[dates[-2]], 2)} keys")
 
 
-    with open('./history.json', 'w', encoding='utf-8') as f:
+    with open('./logs/history.json', 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4, ensure_ascii=False))
+
+
+
+    print('\n\n\n')
