@@ -50,5 +50,3 @@ def read_file(path_to_file: str) -> list:
 
     else:
         return []
-
-
