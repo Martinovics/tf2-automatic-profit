@@ -21,7 +21,9 @@
 ### Notes:
 - Key values may vary a bit, because of the 2 digit roundings.
 - If you can't get it running you can contact me on discord. *(Martinovics#5979)*
-- If the program crashes, you can send me your polldata and pricelist json files (discord), so I can do further testing.
+- If the program crashes: (typically JSONDecodeError)
+    - try to run it again (files might be corrupted) 
+	- or you can send me your polldata and pricelist json files (on discord), so I can do further testing
 - Also **let me know how accurate is this**.
 
 
