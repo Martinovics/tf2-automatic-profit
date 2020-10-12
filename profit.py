@@ -181,16 +181,12 @@ for path in cfg.PATHS:
 
 
 
-    # most and least traded items
-
-
-
     # estimated profits -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     days = (datetime.now() - first_trade_time).days
     profit = sum([item_data[sku]['profit'] for sku in item_data])
 
     print('Profits: ')
-    print(f"estimated: {utils.to_keys(profit)} keys in {days} (full)days, that's {utils.to_keys(profit/days)} keys / 24h")
+    print(f"estimated: {utils.to_keys(profit)} keys in {days} (full)days, that's {utils.to_keys(profit/days) if 0 < days else 0} keys / 24h")
 
 
     profit = 0
@@ -215,31 +211,27 @@ for path in cfg.PATHS:
 
 
     # profit since last checked -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    profit = sum([item_data[sku]['profit'] for sku in item_data])
+    if 'logs' not in os.listdir('./'):
+        os.mkdir('./logs')
     
     if 'history.json' not in os.listdir('./logs'):
-        with open('./logs/history.json', 'w', encoding='utf-8') as f:
-            f.write(json.dumps({}, indent=4, ensure_ascii=False))
+        utils.write_file('./logs/history.json', {})
 
-    with open('./logs/history.json', 'r', encoding='utf-8') as f:
-        history = f.read()
-    history = json.loads(history)
 
+    history = utils.read_file('./logs/history.json')
 
     if account_name not in history:
         history[account_name] = {}
-    history[account_name][datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = utils.to_keys(profit)
+    
+    h = history[account_name] 
+    h[datetime.now().strftime('%d-%m-%Y_%H:%M:%S')] = utils.to_keys(sum([item_data[sku]['profit'] for sku in item_data]))
 
-
-    if 2 <= len(history[account_name]):
-        h = history[account_name]
-        dates = list(history[account_name].keys())
-
+    if 2 <= len(h):
+        dates = list(h.keys())
         print(f"since last checked ({dates[-2]}): {round(h[dates[-1]] - h[dates[-2]], 2)} keys")
 
 
-    with open('./logs/history.json', 'w', encoding='utf-8') as f:
-        f.write(json.dumps(history, indent=4, ensure_ascii=False))
+    utils.write_file('./logs/history.json', history)
 
 
 
