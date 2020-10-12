@@ -1,6 +1,8 @@
-.idea
-__pycache__
+.vscode
+
 *.pyc
-tests
+__pycache__
+
+*test*
 config.py
 history.json
