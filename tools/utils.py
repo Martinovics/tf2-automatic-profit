@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Any
 from tools.config import Config as cfg
 
 
@@ -24,29 +25,42 @@ def name_from_path(path: str) -> str:
 
 
 
-def read_file(path_to_file: str) -> list:
-    if 'pricelist' in path_to_file:
-        with open(path_to_file, 'r', encoding='utf-8') as f:
-            pricelist = f.read()
-        return json.loads(pricelist)
+def read_file(path: str) -> list:
     
-    elif 'polldata' in path_to_file:
-        with open(path_to_file, 'r', encoding='utf-8') as f:
-            polldata = f.read()
-        polldata = json.loads(polldata)
+    with open(path, 'r', encoding='utf-8') as f:
+        data = f.read()
+    
+        if path.endswith('polldata.json'):
+            data = json.loads(data)
 
-        # reduce data size
-        if 'offerData' in polldata:
-            polldata = polldata['offerData']
+            # reduce data size
+            if 'offerData' in data:
+                data = data['offerData']
+            else:
+                return []
+
+            polldata = []
+            for _, trade in data.items():
+                if 'isAccepted' in trade:
+                    if trade['isAccepted'] and trade['partner'] not in cfg.ADMINS:
+                        polldata.append(trade)
+            return polldata
+        
+        elif path.endswith('.json'):
+            return json.loads(data)
+        
         else:
-           return []
+            return data
 
-        polldata_ = []
-        for _, trade in polldata.items():
-            if 'isAccepted' in trade:
-                if trade['isAccepted'] and trade['partner'] not in cfg.ADMINS:
-                    polldata_.append(trade)
-        return polldata_
 
-    else:
-        return []
+
+
+def write_file(path: str, data: Any) -> None:
+
+    with open(path, mode='w', encoding='utf-8') as f:
+
+        if path.endswith('.json'):
+            f.write(json.dumps(data, indent=4, ensure_ascii=False))
+
+        else:
+            f.write(str(data))
