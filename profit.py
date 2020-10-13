@@ -62,7 +62,7 @@ for path in cfg.PATHS:
             skus = sold_skus if action == 'sold' else bought_skus
 
             if skus:
-                sku = skus[0]  # multiple items
+                sku = skus[0]  # this is bad
             else:
                 continue
         else:
