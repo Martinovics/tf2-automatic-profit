@@ -38,6 +38,10 @@ for path in cfg.PATHS:
         # get pures on both sides (in scrap)
         our_curr = their_curr = 0
         for curr, scrap in const.CURRENCIES.items():
+            
+            if 'value' not in trade:  # shitty hotfix
+                continue
+
             if curr == list(const.CURRENCIES.keys())[0]:
                 scrap = trade['value']['rate'] * 9
             
