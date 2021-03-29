@@ -1,0 +1,13 @@
+{
+    "python.pythonPath": "venv\\Scripts\\python.exe",
+    "python.linting.pylintPath": "venv\\Scripts\\python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    
+    "editor.rulers": [120],
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=E303",
+    ],
+}
